@@ -1,16 +1,16 @@
 <template>
     <div>
-        <h2>会費とグルメゾンギフトカードの計算</h2>
+        <h2>会費とジェフグルメカードの計算</h2>
 
-        <label>全人数: <input type="number" v-model.number="totalPeople" min="1"></label>
-        <label>金額 (円): <input type="number" v-model.number="amountPerPerson" min="1"></label>
-        <label>新入社員人数: <input type="number" v-model.number="newEmployees" min="0"></label>
-        <label>会費の上限 (円): <input type="number" v-model.number="maxFee" min="1"></label>
-
-        <button @click="calculate">計算する</button>
-
-        <h3>計算結果</h3>
-        <p>{{ resultMessage }}</p>
+        <div class="container">
+            <label>全人数: <input type="number" v-model.number="totalPeople" min="1"></label>
+            <label>金額 (円): <input type="number" v-model.number="amountPerPerson" min="1"></label>
+            <label>新入社員人数: <input type="number" v-model.number="newEmployees" min="0"></label>
+            <label>会費の上限 (円): <input type="number" v-model.number="maxFee" min="1"></label>
+            <button @click="calculate">計算する</button>
+            <h3>計算結果</h3>
+            <p>{{ resultMessage }}</p>
+        </div>
     </div>
 </template>
 
@@ -54,7 +54,7 @@ setup() {
     }
 
 
-    resultMessage.value = `会費 (1人あたり): ${feePerPerson}円\n必要なグルメゾンギフトカードの枚数: ${giftCardCount}枚`;
+    resultMessage.value = `会費 (1人あたり): ${feePerPerson}円\n必要なジェフグルメカードの枚数: ${giftCardCount}枚`;
     };
 
     return {
@@ -70,11 +70,34 @@ setup() {
 </script>
 
 <style scoped>
+h2 {
+  padding: 1rem 2rem;
+  border-left: 5px solid #000;
+  background: #f4f4f4;
+}
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 90%;
+    margin: 0 auto;
+    gap: .5rem;
+}
 label {
 display: block;
-margin: 8px 0;
 }
 input {
-margin-left: 10px;
+margin-left: .5rem;
+}
+button {
+    background-color: skyblue;
+  border: none;
+  color: white;
+  padding: .5rem;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
 }
 </style>

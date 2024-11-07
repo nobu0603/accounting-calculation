@@ -1,15 +1,29 @@
 <template>
     <div>
-        <h2>会費とジェフグルメカードの計算</h2>
-
+        <h2>会費計算ツール</h2>
         <div class="container">
-            <label>全人数: <input type="number" v-model.number="totalPeople" min="1"></label>
-            <label>金額 (円): <input type="number" v-model.number="amountPerPerson" min="1"></label>
-            <label>新入社員人数: <input type="number" v-model.number="newEmployees" min="0"></label>
-            <label>会費の上限 (円): <input type="number" v-model.number="maxFee" min="1"></label>
-            <button @click="calculate">計算する</button>
-            <h3>計算結果</h3>
-            <p>{{ resultMessage }}</p>
+            <label>全人数: <input type="number" v-model.number="totalPeople" min="1" /></label>
+            <label>金額 (円): <input type="number" v-model.number="amountPerPerson" min="1" /></label>
+            <label>新入社員人数: <input type="number" v-model.number="newEmployees" min="0" /></label>
+            <label>会費の上限 (円): <input type="number" v-model.number="maxFee" min="1" /></label>
+            <button @click="calculateOptimalGiftCards">最適なギフトカード枚数を計算</button>
+            <div v-if="feePerPerson !== null">
+                <p>一人当たりの会費: {{ feePerPerson }} 円</p>
+                <p>必要なギフトカードの枚数: {{ giftCardCount }}</p>
+            </div>
+        </div>
+
+        <h2>指定されたギフトカード枚数での計算</h2>
+        <div class="container">
+            <label>合計人数: <input type="number" v-model.number="totalPeopleManual" min="1" /></label>
+            <label>金額 (円): <input type="number" v-model.number="amountPerPersonManual" min="1" /></label>
+            <label>新入社員人数: <input type="number" v-model.number="newEmployeesManual" min="0" /></label>
+            <label>ギフトカード枚数: <input type="number" v-model.number="giftCardCountManual" min="0" /></label>
+            <button @click="calculateManualFee">計算する</button>
+
+            <div v-if="manualFeePerPerson !== null">
+                <p>既存社員一人当たりの支払金額: {{ manualFeePerPerson }} 円</p>
+            </div>
         </div>
     </div>
 </template>
@@ -18,43 +32,62 @@
 import { ref } from 'vue';
 
 export default {
-name: 'FeeCalculator',
 setup() {
-    const totalPeople = ref(null);
-    const amountPerPerson = ref(null);
-    const newEmployees = ref(null);
+    // 最適なギフトカード枚数の計算用
+    const totalPeople = ref(0);
+    const amountPerPerson = ref(0);
+    const newEmployees = ref(0);
     const maxFee = ref(7700);
-    const resultMessage = ref("");
+    const feePerPerson = ref(null);
+    const giftCardCount = ref(0);
 
-    const calculate = () => {
-    const giftCardValue = 500;
+    // 手動入力計算用
+    const totalPeopleManual = ref(0);
+    const amountPerPersonManual = ref(0);
+    const newEmployeesManual = ref(0);
+    const giftCardCountManual = ref(0);
+    const manualFeePerPerson = ref(null);
 
-    if (
-        isNaN(totalPeople.value) || isNaN(amountPerPerson.value) || isNaN(newEmployees.value) || isNaN(maxFee.value) ||
-        totalPeople.value <= 0 || amountPerPerson.value <= 0 || newEmployees.value < 0 || maxFee.value <= 0 || newEmployees.value >= totalPeople.value
-    ) {
-        resultMessage.value = "入力が正しくありません。全人数は1以上、新入社員人数は0以上で、全人数より少なくしてください。";
+    const GIFT_CARD_VALUE = 500;
+
+    // 最適なギフトカード枚数を計算する関数
+    const calculateOptimalGiftCards = () => {
+    const existingMembers = totalPeople.value - newEmployees.value;
+    giftCardCount.value = 0;
+
+    if (existingMembers <= 0) {
+        alert("既存人数が無効です。全人数は新入社員人数より多くする必要があります。");
         return;
     }
 
-    let existingMembers = totalPeople.value - newEmployees.value;
-    let giftCardCount = 0;
-    let feePerPerson = 0;
+    let calculatedFeePerPerson;
 
-    // ギフトカード枚数を増やしながら会費が上限以下になるまで計算
-    while (feePerPerson > maxFee.value || giftCardCount === 0) {
-    let totalFee = (totalPeople.value * amountPerPerson.value) - (newEmployees.value * amountPerPerson.value) - (giftCardCount * giftCardValue);
-    feePerPerson = Math.floor(totalFee / existingMembers);
+    // ギフトカード枚数を増やしながら個人の会費が上限以下になるまで計算
+    do {
+        const totalFee = (totalPeople.value * amountPerPerson.value) - (giftCardCount.value * GIFT_CARD_VALUE);
+        calculatedFeePerPerson = Math.floor(totalFee / existingMembers);
 
-    if (feePerPerson <= maxFee.value) {
-        break;
+        if (calculatedFeePerPerson > maxFee.value) {
+        giftCardCount.value++;
+        }
+
+    } while (calculatedFeePerPerson > maxFee.value);
+
+    feePerPerson.value = calculatedFeePerPerson;
+    };
+
+    // 手動で入力したギフトカード枚数に基づく計算
+    const calculateManualFee = () => {
+    const existingMembersManual = totalPeopleManual.value - newEmployeesManual.value;
+
+    if (existingMembersManual <= 0) {
+        alert("既存人数が無効です。全人数は新入社員人数より多くする必要があります。");
+        return;
     }
 
-    giftCardCount++;
-    }
-
-
-    resultMessage.value = `会費 (1人あたり): ${feePerPerson}円\n必要なジェフグルメカードの枚数: ${giftCardCount}枚`;
+    // 総額から指定したギフトカード枚数分を引いた後、既存社員で割る
+    const totalFeeManual = (totalPeopleManual.value * amountPerPersonManual.value) - (giftCardCountManual.value * GIFT_CARD_VALUE);
+    manualFeePerPerson.value = Math.floor(totalFeeManual / existingMembersManual);
     };
 
     return {
@@ -62,11 +95,19 @@ setup() {
     amountPerPerson,
     newEmployees,
     maxFee,
-    resultMessage,
-    calculate
+    feePerPerson,
+    giftCardCount,
+    calculateOptimalGiftCards,
+
+    totalPeopleManual,
+    amountPerPersonManual,
+    newEmployeesManual,
+    giftCardCountManual,
+    manualFeePerPerson,
+    calculateManualFee,
     };
 }
-}
+};
 </script>
 
 <style scoped>
